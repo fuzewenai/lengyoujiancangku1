@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unsubscribe • Cold Email MVP</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="container card">
+    <h2 style="color:#e2e8f0">Unsubscribe</h2>
+    <p class="muted">Click the button below to unsubscribe this email from all future outreach.</p>
+    <button id="btn">Unsubscribe</button>
+    <p id="msg" class="muted"></p>
+  </main>
+  <script>
+    // n8n webhook to handle unsubscribe, expects ?t=token
+    const N8N_UNSUB_URL = "https://YOUR_N8N_HOST/webhook/unsubscribe";
+    const btn = document.getElementById('btn');
+    const msg = document.getElementById('msg');
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('t');
+    btn.addEventListener('click', async () => {
+      if (!token) { msg.textContent = "Missing token."; return; }
+      msg.textContent = "Processing...";
+      try{
+        const r = await fetch(N8N_UNSUB_URL, {
+          method:"POST",
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ token })
+        });
+        if(!r.ok) throw new Error('Network error');
+        msg.textContent = "You are unsubscribed. Sorry to see you go.";
+        btn.disabled = true;
+      }catch(e){
+        msg.textContent = "Failed to unsubscribe. Please try again later.";
+      }
+    });
+  </script>
+</body>
+</html>
