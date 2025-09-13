@@ -23,14 +23,14 @@
           <input type="email" name="email" required placeholder="you@company.com">
         </label>
         <label>Full name
-          <input type="text" name="name" placeholder="Jane Doe">
+          <input type="text" name="full_name" placeholder="Jane Doe">
         </label>
       </div>
       <label>Company / Website
         <input type="text" name="company" placeholder="acme.com">
       </label>
       <label>What’s the bottleneck you want to fix?
-        <textarea name="note" rows="4" placeholder="e.g., sync leads from website to CRM, auto-follow-up on unpaid invoices"></textarea>
+        <textarea name="bottleneck" rows="4" placeholder="e.g., sync leads from website to CRM, auto-follow-up on unpaid invoices"></textarea>
       </label>
       <input type="hidden" id="campaign" name="campaign" value="website">
       <button type="submit">Request audit</button>
@@ -44,7 +44,7 @@
   </footer>
 
   <script>
-    // Replace with your n8n production webhook URL
+    // ✅ 用 n8n 的 Production Webhook URL 替换下面这个
     const N8N_WEBHOOK_URL = "https://fuzewen.app.n8n.cloud/webhook/d2438f7f-ed0e-4788-b880-caf1d1d79517";
     const form = document.getElementById('lead-form');
     const msg = document.getElementById('msg');
@@ -53,6 +53,11 @@
       e.preventDefault();
       msg.textContent = "Submitting...";
       const data = Object.fromEntries(new FormData(form).entries());
+
+      // 补充系统字段
+      data.submitted_at = new Date().toISOString();
+      data.user_agent = navigator.userAgent;
+
       try {
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: 'POST',
