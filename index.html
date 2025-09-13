@@ -1,75 +1,33 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lead Capture • Cold Email MVP</title>
-  <meta name="description" content="Simple lead capture form connected to n8n.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css">
-</head>
-<body>
-  <header class="container">
-    <h1>Get a free automation audit</h1>
-    <p>We’ll review your workflow and send back 3 concrete automations you can implement this week.</p>
-  </header>
+<script>
+  // ✅ 使用生产 URL（不要用 -test）
+  const N8N_WEBHOOK_URL = "https://fuzewen.app.n8n.cloud/webhook/hooks/audit";
 
-  <main class="container card">
-    <form id="lead-form">
-      <div class="grid">
-        <label>Email*
-          <input type="email" name="email" required placeholder="you@company.com">
-        </label>
-        <label>Full name
-          <input type="text" name="full_name" placeholder="Jane Doe">
-        </label>
-      </div>
-      <label>Company / Website
-        <input type="text" name="company" placeholder="acme.com">
-      </label>
-      <label>What’s the bottleneck you want to fix?
-        <textarea name="bottleneck" rows="4" placeholder="e.g., sync leads from website to CRM, auto-follow-up on unpaid invoices"></textarea>
-      </label>
-      <input type="hidden" id="campaign" name="campaign" value="website">
-      <button type="submit">Request audit</button>
-      <p id="msg" class="muted"></p>
-    </form>
-  </main>
+  const form = document.getElementById('lead-form');
+  const msg  = document.getElementById('msg');
 
-  <footer class="container footer">
-    <a href="./privacy.html">Privacy</a>
-    <a href="./unsubscribe.html">Unsubscribe</a>
-  </footer>
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.textContent = "Submitting...";
 
-  <script>
-    // ✅ 用 n8n 的 Production Webhook URL 替换下面这个
-    const N8N_WEBHOOK_URL = "https://fuzewen.app.n8n.cloud/webhook/d2438f7f-ed0e-4788-b880-caf1d1d79517";
-    const form = document.getElementById('lead-form');
-    const msg = document.getElementById('msg');
+    // 收集表单并补充系统字段
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.submitted_at = new Date().toISOString();
+    data.user_agent   = navigator.userAgent;
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      msg.textContent = "Submitting...";
-      const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const res = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
 
-      // 补充系统字段
-      data.submitted_at = new Date().toISOString();
-      data.user_agent = navigator.userAgent;
+      if (!res.ok) throw new Error('Non-200 from webhook');
 
-      try {
-        const res = await fetch(N8N_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        if (!res.ok) throw new Error('Network error');
-        window.location.href = './thanks.html';
-      } catch (err) {
-        msg.textContent = "Submission failed. Please try again later.";
-      }
-    });
-  </script>
-</body>
-</html>
+      // 成功后跳转到感谢页
+      window.location.href = './thanks.html';
+    } catch (err) {
+      console.error(err);
+      msg.textContent = "提交失败，请稍后重试。";
+    }
+  });
+</script>
